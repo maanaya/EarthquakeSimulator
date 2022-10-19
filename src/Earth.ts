@@ -54,29 +54,60 @@ export class Earth extends gfx.Transform3
         const mapNormals: number[] = [];
         const texCoords: number[] = [];
         const indices: number[] = [];
+
+        const increment = (Math.PI) / meshResolution;
+        const numVertices = meshResolution + 1;
+        const height = Math.PI/2;
         
         // As a demo, we'll add a square with 2 triangles.
         // First, we define four vertices
-        mapVertices.push(-.5, -.5, 0);
+        /*mapVertices.push(-.5, -.5, 0);
         mapVertices.push(.5, -.5, 0);
         mapVertices.push(.5, .5, 0);
-        mapVertices.push(-.5, .5, 0);
+        mapVertices.push(-.5, .5, 0);*/
+
+        //pushing v
+        for(let i = 0; i < numVertices; i++){
+            //vertical component
+            const vertInc = height - (i * increment);
+            for(let j = 0; j < numVertices; j ++){
+                const inc = -Math.PI/2 + (j * increment);
+                //console.log(inc);
+                mapVertices.push(inc, vertInc - increment, 0);
+                mapVertices.push(inc, vertInc, 0);
+
+                mapNormals.push(0, 0, 1);
+                mapNormals.push(0, 0, 1);
+            }
+        }
 
         // The normals are always directly outward towards the camera
+        /*mapNormals.push(0, 0, 1);
         mapNormals.push(0, 0, 1);
         mapNormals.push(0, 0, 1);
-        mapNormals.push(0, 0, 1);
-        mapNormals.push(0, 0, 1);
+        mapNormals.push(0, 0, 1);*/
 
         // Create some default texture coordinates
+        /*texCoords.push(0, 0);
         texCoords.push(0, 0);
         texCoords.push(0, 0);
-        texCoords.push(0, 0);
-        texCoords.push(0, 0);
+        texCoords.push(0, 0);*/
 
         // Next we define indices into the array for the two triangles
-        indices.push(0, 1, 2);
-        indices.push(0, 2, 3);
+        /*indices.push(0, 1, 2);
+        indices.push(0, 2, 3);*/
+        let count= 0;
+        for(let i = 0; i < meshResolution; i++){
+            const indicesCount = 42 * i;
+            //const angle = i * angleIncrement;
+            for(let j = 0; j < meshResolution; j++){
+                const num = indicesCount + (j * 2);
+                indices.push(num, num + 2, num + 1);
+                indices.push(num+1, num + 2, num +3);
+                count = num;
+            }
+        }
+        console.log(count);//41 indices per row, maybe increment by 41 or 42?
 
         // Set all the earth mesh data
         this.earthMesh.setVertices(mapVertices, true);
