@@ -34,15 +34,15 @@ export class Earth extends gfx.Transform3
     {
         // Initialize texture: you can change to a lower-res texture here if needed
         // Note that this won't display properly until you assign texture coordinates to the mesh
-        this.earthMaterial.texture = new gfx.Texture('./assets/earth-2k.png');
+        this.earthMaterial.texture = new gfx.Texture('./assets/earth-1k.png');
         
         // This disables mipmapping, which makes the texture appear sharper
         this.earthMaterial.texture.setMinFilter(true, false);
 
         // 20x20 is reasonable for a good looking sphere
         // 150x150 is better for height mapping
-        const meshResolution = 20;     
-        //const meshResolution = 150;
+        //const meshResolution = 20;     
+        const meshResolution = 150;
 
         // A rotation about the Z axis is the earth's axial tilt
         this.naturalRotation.setRotationZ(-23.4 * Math.PI / 180); 
@@ -78,8 +78,12 @@ export class Earth extends gfx.Transform3
 
                 mapNormals.push(0, 0, 1);
                 mapNormals.push(0, 0, 1);
+
+                texCoords.push(j/numVertices, (i+1)/numVertices);
+                texCoords.push(j/numVertices, i/numVertices);
             }
         }
+
 
         // The normals are always directly outward towards the camera
         /*mapNormals.push(0, 0, 1);
@@ -98,7 +102,7 @@ export class Earth extends gfx.Transform3
         indices.push(0, 2, 3);*/
         let count= 0;
         for(let i = 0; i < meshResolution; i++){
-            const indicesCount = 42 * i;
+            const indicesCount = (meshResolution*2 + 2) * i;
             //const angle = i * angleIncrement;
             for(let j = 0; j < meshResolution; j++){
                 const num = indicesCount + (j * 2);
@@ -134,7 +138,8 @@ export class Earth extends gfx.Transform3
 
         // TO DO: currently, the earthquake is just placed randomly on the plane
         // You will need to update this code to calculate both the map and globe positions
-        const mapPosition = new gfx.Vector3(Math.random()*6-3, Math.random()*4-2, 0);
+        //const mapPosition = new gfx.Vector3(Math.random()*6-3, Math.random()*4-2, 0);
+        const mapPosition = this.convertLatLongToPlane(record.latitude, record.longitude);
         const globePosition = new gfx.Vector3(Math.random()*6-3, Math.random()*4-2, 0);
         const earthquake = new EarthquakeMarker(mapPosition, globePosition, record, duration);
 
@@ -178,8 +183,13 @@ export class Earth extends gfx.Transform3
     {
         // TO DO: We recommend filling in this function to put all your
         // lat,long --> plane calculations in one place.
+        const latInRad = latitude * (Math.PI/180);
+        const longInRad = longitude * (Math.PI/180);
+        console.log(latitude, longitude);
+        console.log(latInRad,longInRad);
 
-        return new gfx.Vector3();
+
+        return new gfx.Vector3(longInRad, latInRad, 0);
     }
 
     // This function toggles the wireframe debug mode on and off
