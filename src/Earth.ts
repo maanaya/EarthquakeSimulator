@@ -71,7 +71,8 @@ export class Earth extends gfx.Transform3
             //vertical component
             const vertInc = height - (i * increment);
             for(let j = 0; j < numVertices; j ++){
-                const inc = -Math.PI/2 + (j * increment);
+                //idk why but multiplying by two is necessary to get map bigger
+                const inc = -Math.PI + (j * (increment*2));
                 //console.log(inc);
                 mapVertices.push(inc, vertInc - increment, 0);
                 mapVertices.push(inc, vertInc, 0);
@@ -145,7 +146,8 @@ export class Earth extends gfx.Transform3
 
         // Initially, the color is set to yellow.
         // You should update this to be more a meaningful representation of the data.
-        earthquake.material.setColor(new gfx.Color(1, 1, 0));
+        const quakeColorNum = 1 - 2*((record.magnitude/10)%0.5);
+        earthquake.material.setColor(new gfx.Color(1, quakeColorNum, 0));
 
         this.add(earthquake);
     }
@@ -165,7 +167,11 @@ export class Earth extends gfx.Transform3
                 {
                     // Global adjustment to reduce the size. You should probably update this be a
                     // more meaningful representation of the earthquake's lifespan.
-                    quake.scale.set(0.5, 0.5, 0.5);
+                    //quake.magnitue * playbacklife
+                    const subtractingXY = quake.magnitude * playbackLife;
+                    const subtractingZ = 0.5 * playbackLife;
+                    //console.log(adjustedMag)
+                    quake.scale.set(quake.magnitude - subtractingXY, quake.magnitude - subtractingXY, 0.5 - subtractingZ);
                 }
             }
         });
@@ -185,8 +191,6 @@ export class Earth extends gfx.Transform3
         // lat,long --> plane calculations in one place.
         const latInRad = latitude * (Math.PI/180);
         const longInRad = longitude * (Math.PI/180);
-        console.log(latitude, longitude);
-        console.log(latInRad,longInRad);
 
 
         return new gfx.Vector3(longInRad, latInRad, 0);
