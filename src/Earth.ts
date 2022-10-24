@@ -54,6 +54,7 @@ export class Earth extends gfx.Transform3
         const mapNormals: number[] = [];
         const texCoords: number[] = [];
         const indices: number[] = [];
+        const globeMapVertices: number[] = [];
 
         const increment = (Math.PI) / meshResolution;
         const numVertices = meshResolution + 1;
@@ -85,6 +86,34 @@ export class Earth extends gfx.Transform3
             }
         }
 
+        //use lat and long totals of a globe for i and j of for loop
+        const sphereIncY = 180 / meshResolution;
+        const sphereIncX = 360 / meshResolution;
+        console.log(sphereIncX, sphereIncY);
+
+        /*for(let i = 0; i < numVertices; i++){
+            const vertInc = 90 - (i * sphereIncY);
+            for(let j = 0; j < numVertices; j++){
+                const horInc = 180 - (j * sphereIncX);
+                const coords = this.convertLatLongToSphere(vertInc, horInc);
+                const x = coords.x;
+                const y = coords.y;
+                const z = coords.z;
+
+                globeMapVertices.push(x,y,z);
+            }
+        }*/
+        /*for(let i = 90; i > -90; i-=sphereIncY){
+            for(let j = 180; j > -180; j-=sphereIncX){
+                const coords = this.convertLatLongToSphere(i, j);
+                const x = coords.x;
+                const y = coords.y;
+                const z = coords.z;
+
+                globeMapVertices.push(x,y,z);
+            }
+        }*/
+
 
         // The normals are always directly outward towards the camera
         /*mapNormals.push(0, 0, 1);
@@ -112,15 +141,17 @@ export class Earth extends gfx.Transform3
                 count = num;
             }
         }
-        console.log(count);//41 indices per row, maybe increment by 41 or 42?
+        //console.log(count);//41 indices per row, maybe increment by 41 or 42?
 
         // Set all the earth mesh data
         this.earthMesh.setVertices(mapVertices, true);
+        this.earthMesh.setMorphTargetVertices(globeMapVertices, true);
         this.earthMesh.setNormals(mapNormals, true);
         this.earthMesh.setIndices(indices);
         this.earthMesh.setTextureCoordinates(texCoords);
         this.earthMesh.createDefaultVertexColors();
         this.earthMesh.material = this.earthMaterial;
+        this.earthMaterial.morphAlpha = 1;
 
         // Add the mesh to this group
         this.add(this.earthMesh);
@@ -182,7 +213,15 @@ export class Earth extends gfx.Transform3
         // TO DO: We recommend filling in this function to put all your
         // lat,long --> plane calculations in one place.
 
-        return new gfx.Vector3();
+        const latInRad = latitude * (Math.PI/180);
+        const longInRad = longitude * (Math.PI/180);
+
+        const x = Math.cos(latInRad) * Math.sin(longInRad);
+        const y = Math.sin(latInRad);
+        const z = Math.cos(latInRad) * Math.sin(longInRad);
+
+
+        return new gfx.Vector3(x, y, z);
     }
 
     public convertLatLongToPlane(latitude: number, longitude: number) : gfx.Vector3
