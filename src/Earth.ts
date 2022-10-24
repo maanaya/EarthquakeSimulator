@@ -41,8 +41,8 @@ export class Earth extends gfx.Transform3
 
         // 20x20 is reasonable for a good looking sphere
         // 150x150 is better for height mapping
-        const meshResolution = 4;     
-        //const meshResolution = 150;
+        //const meshResolution = 10;     
+        const meshResolution = 150;
 
         // A rotation about the Z axis is the earth's axial tilt
         this.naturalRotation.setRotationZ(-23.4 * Math.PI / 180); 
@@ -109,14 +109,20 @@ export class Earth extends gfx.Transform3
                 //console.log(inc);
                 mapVertices.push(inc, vertInc, 0);
 
-                //this.convertLatLongToSphere()
+                const globeVertices = this.convertLatLongToSphere(vertInc, inc, false);
 
-                //globeMapVertices.push()
+                globeMapVertices.push(globeVertices.x, globeVertices.y, globeVertices.z);
 
                 mapNormals.push(0, 0, 1);
 
+                const normalVec = globeVertices.clone();
+                const zeroVec = new gfx.Vector3(0,0,0);
+                normalVec.subtract(zeroVec);
+
+                globeMapNormals.push(normalVec.x, normalVec.y, normalVec.z);
+
                 texCoords.push(j/numVertices, (i+1)/numVertices);
-                console.log(inc,vertInc);
+                //console.log(inc,vertInc);
             }
         }
 
@@ -131,23 +137,24 @@ export class Earth extends gfx.Transform3
         //         count = num;
         //     }
         // }
-        for(let row = 0; row < (meshResolution-1); row++){
-           for(let col = 0; col < meshResolution-1; col++){
-            const point1 = row * meshResolution + col;
-            const point2 = (row + 1) * meshResolution + col;
-            const point3 = (row + 1) * meshResolution + (col + 1);
-            const point4 = row * meshResolution + (col+1);
+        for(let row = 0; row < (meshResolution); row++){
+           for(let col = 0; col < meshResolution; col++){
+            const point1 = row * numVertices + col;
+            const point2 = (row + 1) * numVertices + col;
+            const point3 = (row + 1) * numVertices + (col + 1);
+            const point4 = row * numVertices + (col+1);
             /*indices.push(point1, point2, point3);
             indices.push(point3, point2, point4);*/
-            indices.push(point3, point2, point1);
-            indices.push(point3, point1, point4);
+            indices.push(point1, point2, point3);
+            indices.push(point4, point1, point3);
 
-            //console.log(point1,point2,point3,point4);
+            console.log(point1,point2,point3,point4);
+            //console.log(row,col)
            }
            //console.log(row);
         }
-        //console.log(count);//41 indices per row, maybe increment by 41 or 42?
-
+        //console.log(mapVertices);//41 indices per row, maybe increment by 41 or 42?
+        //console.log(indices);
         // Set all the earth mesh data
         this.earthMesh.setVertices(mapVertices, true);
         this.earthMesh.setMorphTargetVertices(globeMapVertices);
@@ -229,14 +236,14 @@ export class Earth extends gfx.Transform3
 
             const x = Math.cos(latInRad) * Math.sin(longInRad);
             const y = Math.sin(latInRad);
-            const z = Math.cos(latInRad) * Math.sin(longInRad);
+            const z = Math.cos(latInRad) * Math.cos(longInRad);
 
             return new gfx.Vector3(x, y, z);
         }
         else{
             const x = Math.cos(latitude) * Math.sin(longitude);
             const y = Math.sin(latitude);
-            const z = Math.cos(latitude) * Math.sin(longitude);
+            const z = Math.cos(latitude) * Math.cos(longitude);
             return new gfx.Vector3(x, y, z);
         }
     }
