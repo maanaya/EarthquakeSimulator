@@ -41,8 +41,8 @@ export class Earth extends gfx.Transform3
 
         // 20x20 is reasonable for a good looking sphere
         // 150x150 is better for height mapping
-        //const meshResolution = 20;     
-        const meshResolution = 150;
+        const meshResolution = 20;     
+        //const meshResolution = 150;
 
         // A rotation about the Z axis is the earth's axial tilt
         this.naturalRotation.setRotationZ(-23.4 * Math.PI / 180); 
@@ -60,13 +60,9 @@ export class Earth extends gfx.Transform3
         const increment = (Math.PI) / meshResolution;
         const numVertices = meshResolution + 1;
         const height = Math.PI/2;
-        
-        // As a demo, we'll add a square with 2 triangles.
-        // First, we define four vertices
-        /*mapVertices.push(-.5, -.5, 0);
-        mapVertices.push(.5, -.5, 0);
-        mapVertices.push(.5, .5, 0);
-        mapVertices.push(-.5, .5, 0);*/
+
+        const sphereIncY = 180 / meshResolution;
+        const sphereIncX = 360 / meshResolution;
 
         //pushing v
         for(let i = 0; i < numVertices; i++){
@@ -79,32 +75,77 @@ export class Earth extends gfx.Transform3
                 mapVertices.push(inc, vertInc - increment, 0);
                 mapVertices.push(inc, vertInc, 0);
 
+                const coords = this.convertLatLongToSphere(vertInc, inc);
+                const coords2 = this.convertLatLongToSphere(vertInc - increment, inc);
+                const x = coords.x;
+                const y = coords.y;
+                const z = coords.z;
+
+                const x2 = coords2.x;
+                const y2 = coords2.y;
+                const z2 = coords2.z;
+
+                globeMapVertices.push(x2,y2,z2);
+                globeMapVertices.push(x,y,z);
+
                 mapNormals.push(0, 0, 1);
                 mapNormals.push(0, 0, 1);
+
+                globeMapNormals.push(1,1,1);
+                globeMapNormals.push(1,1,1);
 
                 texCoords.push(j/numVertices, (i+1)/numVertices);
                 texCoords.push(j/numVertices, i/numVertices);
             }
         }
+        /*for(let i = 0; i < numVertices; i++){
+            //vertical component
+            const vertInc = height - (i * increment);
+            for(let j = 0; j < numVertices; j ++){
+                //idk why but multiplying by two is necessary to get map bigger
+                const inc = -Math.PI + (j * (increment*2));
+                //console.log(inc);
+                mapVertices.push(inc, vertInc, 0);
+
+                //this.convertLatLongToSphere()
+
+                //globeMapVertices.push()
+
+                mapNormals.push(0, 0, 1);
+
+                texCoords.push(j/numVertices, i/numVertices);
+            }
+        }*/
 
         //use lat and long totals of a globe for i and j of for loop
-        const sphereIncY = 180 / meshResolution;
+        /*const sphereIncY = 180 / meshResolution;
         const sphereIncX = 360 / meshResolution;
         console.log(sphereIncX, sphereIncY);
+        const sphereIncY = 10;
+        const sphereIncX = 10;*/
 
         /*for(let i = 0; i < numVertices; i++){
             const vertInc = 90 - (i * sphereIncY);
             for(let j = 0; j < numVertices; j++){
                 const horInc = 180 - (j * sphereIncX);
                 const coords = this.convertLatLongToSphere(vertInc, horInc);
+                const coords2 = this.convertLatLongToSphere(i-sphereIncY, horInc);
                 const x = coords.x;
                 const y = coords.y;
                 const z = coords.z;
 
+                const x2 = coords2.x;
+                const y2 = coords2.y;
+                const z2 = coords2.z;
+
+                globeMapVertices.push(x2,y2,z2);
                 globeMapVertices.push(x,y,z);
+
+                globeMapNormals.push(1,1,1);
+                globeMapNormals.push(1,1,1);
             }
         }*/
-        for(let i = 90; i > -90; i-=sphereIncY){
+        /*for(let i = 90; i > -90; i-=sphereIncY){
             for(let j = 180; j > -180; j-=sphereIncX){
                 const coords1 = this.convertLatLongToSphere(i, j);
                 const x = coords1.x;
@@ -116,29 +157,13 @@ export class Earth extends gfx.Transform3
                 const y2 = coords2.y;
                 const z2 = coords2.z;
 
-                globeMapVertices.push(x,y,z);
                 globeMapVertices.push(x2,y2,z2);
-                globeMapNormals.push(1,1,1);
-                globeMapNormals.push(1,1,1);
+                globeMapVertices.push(x,y,z);
+                globeMapNormals.push(0,0,1);
+                globeMapNormals.push(0,0,1);
             }
-        }
+        }*/
 
-
-        // The normals are always directly outward towards the camera
-        /*mapNormals.push(0, 0, 1);
-        mapNormals.push(0, 0, 1);
-        mapNormals.push(0, 0, 1);
-        mapNormals.push(0, 0, 1);*/
-
-        // Create some default texture coordinates
-        /*texCoords.push(0, 0);
-        texCoords.push(0, 0);
-        texCoords.push(0, 0);
-        texCoords.push(0, 0);*/
-
-        // Next we define indices into the array for the two triangles
-        /*indices.push(0, 1, 2);
-        indices.push(0, 2, 3);*/
         let count= 0;
         for(let i = 0; i < meshResolution; i++){
             const indicesCount = (meshResolution*2 + 2) * i;
@@ -150,6 +175,17 @@ export class Earth extends gfx.Transform3
                 count = num;
             }
         }
+        /*let count= 0;
+        for(let i = 0; i < numVertices; i++){
+            const indicesCount = (meshResolution*2 + 2) * i;
+            //const angle = i * angleIncrement;
+            for(let j = 0; j < numVertices; j++){
+                const num = indicesCount + (j * 2);
+                indices.push(num, num + 2, num + 1);
+                indices.push(num+1, num + 2, num +3);
+                count = num;
+            }
+        }*/
         //console.log(count);//41 indices per row, maybe increment by 41 or 42?
 
         // Set all the earth mesh data
@@ -226,12 +262,16 @@ export class Earth extends gfx.Transform3
         // TO DO: We recommend filling in this function to put all your
         // lat,long --> plane calculations in one place.
 
-        const latInRad = latitude * (Math.PI/180);
+        /*const latInRad = latitude * (Math.PI/180);
         const longInRad = longitude * (Math.PI/180);
 
         const x = Math.cos(latInRad) * Math.sin(longInRad);
         const y = Math.sin(latInRad);
-        const z = Math.cos(latInRad) * Math.sin(longInRad);
+        const z = Math.cos(latInRad) * Math.sin(longInRad);*/
+
+        const x = Math.cos(latitude) * Math.sin(longitude);
+        const y = Math.sin(latitude);
+        const z = Math.cos(latitude) * Math.sin(longitude);
 
 
         return new gfx.Vector3(x, y, z);
