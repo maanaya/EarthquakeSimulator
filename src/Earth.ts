@@ -55,6 +55,7 @@ export class Earth extends gfx.Transform3
         const texCoords: number[] = [];
         const indices: number[] = [];
         const globeMapVertices: number[] = [];
+        const globeMapNormals: number[] = [];
 
         const increment = (Math.PI) / meshResolution;
         const numVertices = meshResolution + 1;
@@ -103,16 +104,24 @@ export class Earth extends gfx.Transform3
                 globeMapVertices.push(x,y,z);
             }
         }*/
-        /*for(let i = 90; i > -90; i-=sphereIncY){
+        for(let i = 90; i > -90; i-=sphereIncY){
             for(let j = 180; j > -180; j-=sphereIncX){
-                const coords = this.convertLatLongToSphere(i, j);
-                const x = coords.x;
-                const y = coords.y;
-                const z = coords.z;
+                const coords1 = this.convertLatLongToSphere(i, j);
+                const x = coords1.x;
+                const y = coords1.y;
+                const z = coords1.z;
+
+                const coords2 = this.convertLatLongToSphere(i-sphereIncY, j);
+                const x2 = coords2.x;
+                const y2 = coords2.y;
+                const z2 = coords2.z;
 
                 globeMapVertices.push(x,y,z);
+                globeMapVertices.push(x2,y2,z2);
+                globeMapNormals.push(1,1,1);
+                globeMapNormals.push(1,1,1);
             }
-        }*/
+        }
 
 
         // The normals are always directly outward towards the camera
@@ -145,13 +154,14 @@ export class Earth extends gfx.Transform3
 
         // Set all the earth mesh data
         this.earthMesh.setVertices(mapVertices, true);
-        this.earthMesh.setMorphTargetVertices(globeMapVertices, true);
+        this.earthMesh.setMorphTargetVertices(globeMapVertices);
+        this.earthMesh.setMorphTargetNormals(globeMapNormals);
         this.earthMesh.setNormals(mapNormals, true);
         this.earthMesh.setIndices(indices);
         this.earthMesh.setTextureCoordinates(texCoords);
         this.earthMesh.createDefaultVertexColors();
         this.earthMesh.material = this.earthMaterial;
-        this.earthMaterial.morphAlpha = 1;
+        this.globeMode = true;
 
         // Add the mesh to this group
         this.add(this.earthMesh);
@@ -161,6 +171,9 @@ export class Earth extends gfx.Transform3
     public update(deltaTime: number) : void
     {
         // TO DO
+        if(this.globeMode){
+            this.earthMaterial.morphAlpha = 1;
+        }
     }
 
     public createEarthquake(record: EarthquakeRecord, normalizedMagnitude : number)
