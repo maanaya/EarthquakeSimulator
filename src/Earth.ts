@@ -16,6 +16,7 @@ export class Earth extends gfx.Transform3
     public globeMode: boolean;
     public naturalRotation: gfx.Quaternion;
     public mouseRotation: gfx.Quaternion;
+    public morphAlpha = 0;
 
     constructor()
     {
@@ -61,52 +62,12 @@ export class Earth extends gfx.Transform3
         const numVertices = meshResolution + 1;
         const height = Math.PI/2;
 
-        //pushing v, wokring btw
-        // for(let i = 0; i < numVertices; i++){
-        //     //vertical component
-        //     const vertInc = height - (i * increment);
-        //     for(let j = 0; j < numVertices; j ++){
-        //         //idk why but multiplying by two is necessary to get map bigger
-        //         const inc = -Math.PI + (j * (increment*2));
-        //         //console.log(inc);
-        //         mapVertices.push(inc, vertInc - increment, 0);
-        //         mapVertices.push(inc, vertInc, 0);
-
-        //         const coords = this.convertLatLongToSphere(vertInc, inc, false);
-        //         const coords2 = this.convertLatLongToSphere(vertInc - increment, inc, false);
-        //         const x = coords.x;
-        //         const y = coords.y;
-        //         const z = coords.z;
-
-        //         const x2 = coords2.x;
-        //         const y2 = coords2.y;
-        //         const z2 = coords2.z;
-
-        //         globeMapVertices.push(x2,y2,z2);
-        //         globeMapVertices.push(x,y,z);
-
-        //         mapNormals.push(0, 0, 1);
-        //         mapNormals.push(0, 0, 1);
-
-        //         const globeNormal1 = coords.clone();
-        //         globeNormal1.subtract(new gfx.Vector3(0,0,0));
-        //         const globeNormal2 = coords2.clone();
-        //         globeNormal2.subtract(new gfx.Vector3(0,0,0));
-
-        //         globeMapNormals.push(globeNormal2.x, globeNormal2.y, globeNormal2.z);
-        //         globeMapNormals.push(globeNormal1.x, globeNormal1.y, globeNormal1.z);
-
-        //         texCoords.push(j/numVertices, (i+1)/numVertices);
-        //         texCoords.push(j/numVertices, i/numVertices);
-        //     }
-        // }
         for(let i = 0; i < numVertices; i++){
             //vertical component
             const vertInc = height - (i * increment);
             for(let j = 0; j < numVertices; j ++){
                 //idk why but multiplying by two is necessary to get map bigger
                 const inc = -Math.PI + (j * (increment*2));
-                //console.log(inc);
                 mapVertices.push(inc, vertInc, 0);
 
                 const globeVertices = this.convertLatLongToSphere(vertInc, inc, false);
@@ -122,39 +83,19 @@ export class Earth extends gfx.Transform3
                 globeMapNormals.push(normalVec.x, normalVec.y, normalVec.z);
 
                 texCoords.push(j/numVertices, (i+1)/numVertices);
-                //console.log(inc,vertInc);
             }
         }
 
-        // let count= 0;
-        // for(let i = 0; i < meshResolution; i++){
-        //     const indicesCount = (meshResolution*2 + 2) * i;
-        //     //const angle = i * angleIncrement;
-        //     for(let j = 0; j < meshResolution; j++){
-        //         const num = indicesCount + (j * 2);
-        //         indices.push(num, num + 2, num + 1);
-        //         indices.push(num+1, num + 2, num +3);
-        //         count = num;
-        //     }
-        // }
         for(let row = 0; row < (meshResolution); row++){
            for(let col = 0; col < meshResolution; col++){
             const point1 = row * numVertices + col;
             const point2 = (row + 1) * numVertices + col;
             const point3 = (row + 1) * numVertices + (col + 1);
             const point4 = row * numVertices + (col+1);
-            /*indices.push(point1, point2, point3);
-            indices.push(point3, point2, point4);*/
             indices.push(point1, point2, point3);
             indices.push(point4, point1, point3);
-
-            console.log(point1,point2,point3,point4);
-            //console.log(row,col)
            }
-           //console.log(row);
         }
-        //console.log(mapVertices);//41 indices per row, maybe increment by 41 or 42?
-        //console.log(indices);
         // Set all the earth mesh data
         this.earthMesh.setVertices(mapVertices, true);
         this.earthMesh.setMorphTargetVertices(globeMapVertices);
@@ -173,11 +114,35 @@ export class Earth extends gfx.Transform3
     public update(deltaTime: number) : void
     {
         // TO DO
+        const morphSpeed = 0.75;
+
         if(this.globeMode){
-            this.earthMaterial.morphAlpha = 1;
+            if(this.earthMaterial.morphAlpha < 1 && this.earthMaterial.morphAlpha >= 0){
+                this.morphAlpha += deltaTime * morphSpeed;
+                this.morphAlpha = gfx.MathUtils.clamp(this.morphAlpha, 0 ,1);
+                this.earthMaterial.morphAlpha = this.morphAlpha;
+
+                this.children.forEach((quake: gfx.Transform3) => {
+                    if(quake instanceof EarthquakeMarker)
+                    {
+                        quake.position.lerp(quake.mapPosition, quake.globePosition, this.morphAlpha);
+                    }
+                });
+            }
         }
-        else{
-            this.earthMaterial.morphAlpha = 0;
+        if(!this.globeMode){
+            if(this.earthMaterial.morphAlpha <= 1 && this.earthMaterial.morphAlpha > 0){
+                this.morphAlpha -= deltaTime * morphSpeed;
+                this.morphAlpha = gfx.MathUtils.clamp(this.morphAlpha, 0 ,1);
+                this.earthMaterial.morphAlpha = this.morphAlpha;
+
+                this.children.forEach((quake: gfx.Transform3) => {
+                    if(quake instanceof EarthquakeMarker)
+                    {
+                        quake.position.lerp(quake.mapPosition, quake.globePosition, this.morphAlpha);
+                    }
+                });
+            }
         }
     }
 
@@ -190,8 +155,8 @@ export class Earth extends gfx.Transform3
         // You will need to update this code to calculate both the map and globe positions
         //const mapPosition = new gfx.Vector3(Math.random()*6-3, Math.random()*4-2, 0);
         const mapPosition = this.convertLatLongToPlane(record.latitude, record.longitude);
-        const globePosition = new gfx.Vector3(Math.random()*6-3, Math.random()*4-2, 0);
-        const earthquake = new EarthquakeMarker(mapPosition, globePosition, record, duration);
+        const globePosition = this.convertLatLongToSphere(record.latitude, record.longitude, true);
+        const earthquake = new EarthquakeMarker(mapPosition, globePosition, record, duration, this.globeMode);
 
         // Initially, the color is set to yellow.
         // You should update this to be more a meaningful representation of the data.
@@ -219,7 +184,6 @@ export class Earth extends gfx.Transform3
                     //quake.magnitue * playbacklife
                     const subtractingXY = quake.magnitude * playbackLife;
                     const subtractingZ = 0.5 * playbackLife;
-                    //console.log(adjustedMag)
                     quake.scale.set(quake.magnitude - subtractingXY, quake.magnitude - subtractingXY, 0.5 - subtractingZ);
                 }
             }
